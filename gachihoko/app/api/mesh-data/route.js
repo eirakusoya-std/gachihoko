@@ -1,14 +1,15 @@
 // app/api/mesh-data/route.js
-let latestData = {}; // 最新のMESHデータを保持
+let latestData = {}; // 最新データを保存
 
+// MESHからデータを受け取る
 export async function POST(request) {
   const body = await request.json();
   latestData = body;
-  console.log("✅ MESHから受信:", latestData);
-  return Response.json({ ok: true });
+  console.log("✅ MESH received:", latestData);
+  return Response.json({ status: "ok" });
 }
 
+// ブラウザから最新データを取得
 export async function GET() {
-  // ブラウザから最新データを取得できるようにする
   return Response.json(latestData);
 }
