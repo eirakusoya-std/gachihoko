@@ -40,7 +40,7 @@ export default function Page() {
           });
         }
       }
-    }, 500);
+    }, 150);
 
     return () => clearInterval(interval);
   }, [lastOccurredAt]);
