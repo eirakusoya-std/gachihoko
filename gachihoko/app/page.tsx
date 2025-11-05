@@ -11,8 +11,8 @@ export default function Page() {
   const [total, setTotal] = useState(0);
   const [team, setTeam] = useState<"blue" | "pink">("blue");
   const [meshData, setMeshData] = useState<MeshData | null>(null);
+  const [lastOccurredAt, setLastOccurredAt] = useState<string | null>(null);
 
-  // 定期的にMESHデータを取得
   useEffect(() => {
     const interval = setInterval(async () => {
       const res = await fetch("/api/mesh-data", { cache: "no-store" });
@@ -20,23 +20,30 @@ export default function Page() {
       const data = await res.json();
 
       if (data.latest) {
-        setMeshData(data.latest);
+        const latest = data.latest as MeshData;
 
-        // ✅ サーバーからの合計値を直接使用
-        const newTotal = Number(data.total) || 0;
-        setTotal(newTotal);
+        // 同じデータを二重で加算しないように、前回と比較
+        if (latest.occurred_at !== lastOccurredAt) {
+          setMeshData(latest);
+          setLastOccurredAt(latest.occurred_at);
 
-        // ✅ 100を超えたらチーム切替
-        if (newTotal >= 100) {
-          setTeam((prevTeam) => (prevTeam === "blue" ? "pink" : "blue"));
-          // リセット要求を送ってサーバー側のtotalを0に戻す（任意）
-          await fetch("/api/mesh-data/reset", { method: "POST" }).catch(() => {});
+          setTotal((prevTotal) => {
+            const next = prevTotal + Number(latest.value);
+
+            // ✅ 100を超えたらチーム切替＆リセット
+            if (next >= 100) {
+              setTeam((prev) => (prev === "blue" ? "pink" : "blue"));
+              return 0;
+            }
+
+            return next;
+          });
         }
       }
     }, 500);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [lastOccurredAt]);
 
   // チームカラー設定
   const blueColor = "#00bfff";
