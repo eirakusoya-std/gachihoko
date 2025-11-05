@@ -9,33 +9,44 @@ type MeshData = {
 };
 
 export default function Page() {
-  const [blueTotal, setBlueTotal] = useState(0);
-  const [pinkTotal, setPinkTotal] = useState(0);
+  // 現在のゲージ位置 (-100 ~ 100)
+  const [gauge, setGauge] = useState(0);
   const [meshData, setMeshData] = useState<MeshData | null>(null);
   const [lastOccurredAt, setLastOccurredAt] = useState<string | null>(null);
+  const [winner, setWinner] = useState<"blue" | "pink" | null>(null);
 
+  // MESHデータ取得ループ
   useEffect(() => {
     const interval = setInterval(async () => {
       const res = await fetch("/api/mesh-data", { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
 
-      // ✅ active=falseなら加算処理をスキップ
+      // active=falseなら停止
       if (!data.active) return;
 
       if (data.latest) {
         const latest = data.latest as MeshData;
 
-        // 重複防止（同じoccurred_atならスキップ）
+        // 重複防止
         if (latest.occurred_at !== lastOccurredAt) {
           setMeshData(latest);
           setLastOccurredAt(latest.occurred_at);
 
-          if (latest.player === 1) {
-            setBlueTotal((prev) => Math.min(prev + latest.value, 100));
-          } else if (latest.player === 2) {
-            setPinkTotal((prev) => Math.min(prev + latest.value, 100));
-          }
+          // Player 1 = +加算（右へ押す）
+          // Player 2 = -加算（左へ押す）
+          setGauge((prev) => {
+            const next =
+              latest.player === 1
+                ? Math.min(prev + latest.value, 100)
+                : Math.max(prev - latest.value, -100);
+
+            // 勝敗判定
+            if (next >= 50) setWinner("blue");
+            else if (next <= -50) setWinner("pink");
+
+            return next;
+          });
         }
       }
     }, 150);
@@ -43,12 +54,13 @@ export default function Page() {
     return () => clearInterval(interval);
   }, [lastOccurredAt]);
 
+  // カラー設定
   const blueColor = "#00bfff";
   const pinkColor = "#ff69b4";
 
-  const totalSum = Math.min(blueTotal + pinkTotal, 100);
-  const blueRatio = (blueTotal / totalSum) * 100 || 0;
-  const pinkRatio = (pinkTotal / totalSum) * 100 || 0;
+  // 中央を基準に左右で塗り分けるゲージの見た目
+  const leftRatio = ((100 - (gauge + 100)) / 200) * 100; // 負側
+  const rightRatio = ((gauge + 100) / 200) * 100; // 正側
 
   return (
     <main
@@ -64,9 +76,10 @@ export default function Page() {
       }}
     >
       <h1 style={{ fontSize: "2rem", marginBottom: "1rem", color: "#444" }}>
-        Splatoon-style Dual Gauge ⚔️
+        Splatoon-style Tug-of-War ⚖️
       </h1>
 
+      {/* === ゲージバー === */}
       <div
         style={{
           position: "relative",
@@ -79,48 +92,69 @@ export default function Page() {
           display: "flex",
         }}
       >
-        {/* Blue side */}
+        {/* Pink side（左側） */}
         <motion.div
-          animate={{ width: `${blueRatio}%` }}
-          transition={{ type: "spring", stiffness: 80, damping: 15 }}
-          style={{
-            height: "100%",
-            background: blueColor,
-            borderRadius: "inherit",
-            transformOrigin: "left center",
-          }}
-        />
-
-        {/* Pink side */}
-        <motion.div
-          animate={{ width: `${pinkRatio}%` }}
+          animate={{ width: `${leftRatio}%` }}
           transition={{ type: "spring", stiffness: 80, damping: 15 }}
           style={{
             height: "100%",
             background: pinkColor,
-            borderRadius: "inherit",
             transformOrigin: "right center",
-            marginLeft: "auto",
+          }}
+        />
+
+        {/* Blue side（右側） */}
+        <motion.div
+          animate={{ width: `${rightRatio}%` }}
+          transition={{ type: "spring", stiffness: 80, damping: 15 }}
+          style={{
+            height: "100%",
+            background: blueColor,
+            transformOrigin: "left center",
+          }}
+        />
+
+        {/* 中心ライン */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: 0,
+            bottom: 0,
+            width: "2px",
+            background: "#555",
+            opacity: 0.4,
           }}
         />
       </div>
 
-      <div style={{ marginTop: "1rem", display: "flex", gap: "3rem" }}>
-        <div style={{ textAlign: "center" }}>
-          <p style={{ color: blueColor, fontSize: "1.2rem", fontWeight: "bold" }}>
-            BLUE
-          </p>
-          <p style={{ fontSize: "1rem" }}>{Math.floor(blueTotal)} pts</p>
-        </div>
+      {/* === 数値表示 === */}
+      <p style={{ marginTop: "1rem", fontSize: "1.2rem" }}>
+        Gauge: {gauge.toFixed(1)}{" "}
+        <span style={{ opacity: 0.6 }}>(range: -100 ~ +100)</span>
+      </p>
 
-        <div style={{ textAlign: "center" }}>
-          <p style={{ color: pinkColor, fontSize: "1.2rem", fontWeight: "bold" }}>
-            PINK
-          </p>
-          <p style={{ fontSize: "1rem" }}>{Math.floor(pinkTotal)} pts</p>
-        </div>
-      </div>
+      {/* === 勝敗表示 === */}
+      {winner && (
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 150, damping: 10 }}
+          style={{
+            marginTop: "1rem",
+            padding: "10px 20px",
+            borderRadius: "12px",
+            background: winner === "blue" ? blueColor : pinkColor,
+            color: "#fff",
+            fontWeight: "bold",
+            fontSize: "1.5rem",
+          }}
+        >
+          {winner === "blue" ? "BLUE WINS!" : "PINK WINS!"}
+        </motion.div>
+      )}
 
+      {/* === 最新データ表示 === */}
       <AnimatePresence>
         {meshData && (
           <motion.p
@@ -140,7 +174,7 @@ export default function Page() {
                   : "#333",
             }}
           >
-            Player {meshData.player}: +{meshData.value.toFixed(2)}
+            Player {meshData.player}: ±{meshData.value.toFixed(2)}
           </motion.p>
         )}
       </AnimatePresence>
