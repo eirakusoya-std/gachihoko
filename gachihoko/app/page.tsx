@@ -31,7 +31,7 @@ export default function Page() {
       for (let i = 0; i <= steps; i++) {
         const t = i / steps;
         const y = t;
-        const x = 0.8 + Math.sin(t * Math.PI * freq + timeRef.current) * amp;
+        const x = 1 + Math.sin(t * Math.PI * freq + timeRef.current) * amp;
         points.push({ x, y });
       }
 
