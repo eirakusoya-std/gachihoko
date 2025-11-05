@@ -21,16 +21,17 @@ export default function Page() {
 
       if (data.latest) {
         setMeshData(data.latest);
-        // 値を加算
-        setTotal((prev) => {
-          const next = prev + Number(data.latest.value);
-          // 合計100超えたらチーム切り替え & リセット
-          if (next >= 100) {
-            setTeam((prevTeam) => (prevTeam === "blue" ? "pink" : "blue"));
-            return 0;
-          }
-          return next;
-        });
+
+        // ✅ サーバーからの合計値を直接使用
+        const newTotal = Number(data.total) || 0;
+        setTotal(newTotal);
+
+        // ✅ 100を超えたらチーム切替
+        if (newTotal >= 100) {
+          setTeam((prevTeam) => (prevTeam === "blue" ? "pink" : "blue"));
+          // リセット要求を送ってサーバー側のtotalを0に戻す（任意）
+          await fetch("/api/mesh-data/reset", { method: "POST" }).catch(() => {});
+        }
       }
     }, 500);
 
@@ -63,6 +64,7 @@ export default function Page() {
       <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>
         Splatoon-style Gauge Battle 🎮
       </h1>
+
       <div
         style={{
           position: "relative",
