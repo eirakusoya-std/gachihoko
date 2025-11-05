@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type MeshData = {
@@ -14,21 +14,57 @@ export default function Page() {
   const [lastOccurredAt, setLastOccurredAt] = useState<string | null>(null);
   const [winner, setWinner] = useState<"blue" | "pink" | null>(null);
 
+  const [wavePath, setWavePath] = useState(""); // 動的波形
+  const animationRef = useRef<number | null>(null);
+  const timeRef = useRef(0);
+
+  // === 波アニメーション生成 ===
+  useEffect(() => {
+    const animateWave = () => {
+      timeRef.current += 0.04;
+      const amp = 0.01; // 波の振幅（0〜1の割合）
+      const freq = 2; // 波の数
+      const points = [];
+
+      // 上下に緩やかに動くsin波パスを生成
+      const steps = 10;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const y = t;
+        const x = 0.8 + Math.sin(t * Math.PI * freq + timeRef.current) * amp;
+        points.push({ x, y });
+      }
+
+      let d = `M0,0 L${points[0].x},0 `;
+      for (let i = 1; i < points.length; i++) {
+        const p = points[i];
+        d += `L${p.x},${p.y} `;
+      }
+      d += "L0,1 Z";
+
+      setWavePath(d);
+      animationRef.current = requestAnimationFrame(animateWave);
+    };
+
+    animationRef.current = requestAnimationFrame(animateWave);
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, []);
+
+  // === MESHデータ取得 ===
   useEffect(() => {
     const interval = setInterval(async () => {
       const res = await fetch("/api/mesh-data", { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
-
       if (!data.active) return;
 
       if (data.latest) {
         const latest = data.latest as MeshData;
-
         if (latest.occurred_at !== lastOccurredAt) {
           setMeshData(latest);
           setLastOccurredAt(latest.occurred_at);
-
           updateGauge(latest.player, latest.value);
         }
       }
@@ -46,7 +82,6 @@ export default function Page() {
 
       if (next >= 50) setWinner("blue");
       else if (next <= -50) setWinner("pink");
-
       return next;
     });
   };
@@ -58,10 +93,8 @@ export default function Page() {
     setWinner(null);
   };
 
-  const blueColor = "#00bfff";
-  const pinkColor = "#ff69b4";
-
-  // gauge (-100 ~ 100) → 中央の境界線を動かす位置
+  const blueColor = "#19d719";
+  const pinkColor = "#f02d7d";
   const centerPercent = (gauge + 100) / 2; // -100→0%, +100→100%
 
   return (
@@ -88,28 +121,39 @@ export default function Page() {
           position: "relative",
           width: "80%",
           height: "60px",
-          background: pinkColor, // ← 背景をピンク固定にする
+          background: pinkColor,
           borderRadius: "999px",
           overflow: "hidden",
-          boxShadow: "0 0 15px rgba(0,0,0,0.3) inset",
         }}
       >
-        {/* === 青ゾーン === */}
-        <motion.div
-          animate={{ width: `${centerPercent}%` }}
-          transition={{ type: "spring", stiffness: 100, damping: 15 }}
+        <svg
+          width="100%"
+          height="60"
           style={{
             position: "absolute",
             left: 0,
             top: 0,
-            bottom: 0,
-            background: blueColor,
-            borderRadius: "inherit",
-            zIndex: 2, // ← ピンクの上に重ねる
+            zIndex: 2,
           }}
-        />
+        >
+          <defs>
+            <clipPath id="verticalWaveClip" clipPathUnits="objectBoundingBox">
+              <path d={wavePath} fill="white" />
+            </clipPath>
+          </defs>
 
-        {/* === 中央線 === */}
+          <motion.rect
+            x="0"
+            y="0"
+            width={`${centerPercent}%`}
+            height="60"
+            fill={blueColor}
+            clipPath="url(#verticalWaveClip)"
+            transition={{ type: "spring", stiffness: 100, damping: 15 }}
+          />
+        </svg>
+
+        {/* 中央ライン */}
         <motion.div
           animate={{ left: `${centerPercent}%` }}
           transition={{ type: "spring", stiffness: 100, damping: 15 }}
@@ -119,7 +163,7 @@ export default function Page() {
             bottom: 0,
             width: "2px",
             background: "#fff",
-            zIndex: 3, // ← 一番上に境界線
+            zIndex: 3,
             boxShadow: "0 0 6px rgba(0,0,0,0.4)",
           }}
         />
