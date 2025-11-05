@@ -14,12 +14,14 @@ export default function Page() {
   const [meshData, setMeshData] = useState<MeshData | null>(null);
   const [lastOccurredAt, setLastOccurredAt] = useState<string | null>(null);
 
-  // 定期的にMESHデータを取得
   useEffect(() => {
     const interval = setInterval(async () => {
       const res = await fetch("/api/mesh-data", { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
+
+      // ✅ active=falseなら加算処理をスキップ
+      if (!data.active) return;
 
       if (data.latest) {
         const latest = data.latest as MeshData;
@@ -36,16 +38,14 @@ export default function Page() {
           }
         }
       }
-    }, 150); // ← 更新間隔（0.15秒）
+    }, 150);
 
     return () => clearInterval(interval);
   }, [lastOccurredAt]);
 
-  // チームカラー設定
   const blueColor = "#00bfff";
   const pinkColor = "#ff69b4";
 
-  // 両者の合計が100を超えないように
   const totalSum = Math.min(blueTotal + pinkTotal, 100);
   const blueRatio = (blueTotal / totalSum) * 100 || 0;
   const pinkRatio = (pinkTotal / totalSum) * 100 || 0;
@@ -67,7 +67,6 @@ export default function Page() {
         Splatoon-style Dual Gauge ⚔️
       </h1>
 
-      {/* === 押し合いゲージ === */}
       <div
         style={{
           position: "relative",
