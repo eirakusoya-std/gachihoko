@@ -19,6 +19,7 @@ export async function POST(request) {
     // データを保存
     latestMeshData = {
       value: Number(body.value),
+      player: Number(body.player) || 0,
       occurred_at: body.occurred_at || new Date().toISOString(),
     };
     lastReceivedAt = Date.now();
