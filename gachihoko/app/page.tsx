@@ -14,7 +14,6 @@ export default function Page() {
   const [lastOccurredAt, setLastOccurredAt] = useState<string | null>(null);
   const [winner, setWinner] = useState<"blue" | "pink" | null>(null);
 
-  // ======== MESHデータ取得ループ ========
   useEffect(() => {
     const interval = setInterval(async () => {
       const res = await fetch("/api/mesh-data", { cache: "no-store" });
@@ -38,7 +37,6 @@ export default function Page() {
     return () => clearInterval(interval);
   }, [lastOccurredAt]);
 
-  // ======== 勝敗付きゲージ更新関数 ========
   const updateGauge = (player: number, value: number) => {
     setGauge((prev) => {
       const next =
@@ -53,21 +51,18 @@ export default function Page() {
     });
   };
 
-  // ======== デバッグボタン用ハンドラ ========
-  const handleManualAdd = () => updateGauge(1, 5); // Blueチームに +5
-  const handleManualSub = () => updateGauge(2, 5); // Pinkチームに -5
+  const handleManualAdd = () => updateGauge(1, 5);
+  const handleManualSub = () => updateGauge(2, 5);
   const handleReset = () => {
     setGauge(0);
     setWinner(null);
   };
 
-  // ======== カラー設定 ========
   const blueColor = "#00bfff";
   const pinkColor = "#ff69b4";
 
-  // gauge (-100 ~ 100) → 正負に応じて左右に分配
-  const blueWidth = gauge > 0 ? (gauge / 100) * 50 : 0;
-  const pinkWidth = gauge < 0 ? (Math.abs(gauge) / 100) * 50 : 0;
+  // gauge (-100 ~ 100) → 中央の境界線を動かす位置
+  const centerPercent = (gauge + 100) / 2; // -100→0%, +100→100%
 
   return (
     <main
@@ -93,48 +88,39 @@ export default function Page() {
           position: "relative",
           width: "80%",
           height: "60px",
-          background: "#eee",
+          background: pinkColor, // ← 背景をピンク固定にする
           borderRadius: "999px",
           overflow: "hidden",
           boxShadow: "0 0 15px rgba(0,0,0,0.3) inset",
         }}
       >
-        {/* ピンク（左側） */}
+        {/* === 青ゾーン === */}
         <motion.div
-          animate={{ width: `${pinkWidth}%` }}
-          transition={{ type: "spring", stiffness: 80, damping: 15 }}
+          animate={{ width: `${centerPercent}%` }}
+          transition={{ type: "spring", stiffness: 100, damping: 15 }}
           style={{
             position: "absolute",
-            left: "50%",
-            height: "100%",
-            background: pinkColor,
-            transformOrigin: "right center",
-          }}
-        />
-
-        {/* 青（右側） */}
-        <motion.div
-          animate={{ width: `${blueWidth}%` }}
-          transition={{ type: "spring", stiffness: 80, damping: 15 }}
-          style={{
-            position: "absolute",
-            right: "50%",
-            height: "100%",
+            left: 0,
+            top: 0,
+            bottom: 0,
             background: blueColor,
-            transformOrigin: "left center",
+            borderRadius: "inherit",
+            zIndex: 2, // ← ピンクの上に重ねる
           }}
         />
 
-        {/* 中心線 */}
-        <div
+        {/* === 中央線 === */}
+        <motion.div
+          animate={{ left: `${centerPercent}%` }}
+          transition={{ type: "spring", stiffness: 100, damping: 15 }}
           style={{
             position: "absolute",
-            left: "50%",
             top: 0,
             bottom: 0,
             width: "2px",
-            background: "#555",
-            opacity: 0.4,
+            background: "#fff",
+            zIndex: 3, // ← 一番上に境界線
+            boxShadow: "0 0 6px rgba(0,0,0,0.4)",
           }}
         />
       </div>
@@ -146,7 +132,7 @@ export default function Page() {
       </p>
 
       {/* === デバッグボタン === */}
-      <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
+      <div style={{ display: "flex", gap: "1rem" }}>
         <button
           onClick={handleManualAdd}
           style={{
