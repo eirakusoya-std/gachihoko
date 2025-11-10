@@ -257,6 +257,69 @@ const handleForcePinkWin = () => {
           zIndex: 10,
         }}
       >
+        
+        {/* === 波打つ勝敗ライン === */}
+        <svg
+          width="100%"
+          height="60"
+          viewBox="0 0 100 60"
+          preserveAspectRatio="none"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            zIndex: 5,
+            pointerEvents: "none",
+          }}
+        >
+          {/* 左側の勝敗ライン（-50） */}
+          <motion.path
+            d={`
+              M25,0
+              Q27,10 25,20
+              Q23,30 25,40
+              Q27,50 25,60
+            `}
+            stroke="white"
+            strokeWidth="1.5"
+            fill="none"
+            animate={{
+              d: [
+                `M25,0 Q27,10 25,20 Q23,30 25,40 Q27,50 25,60`,
+                `M25,0 Q23,10 25,20 Q27,30 25,40 Q23,50 25,60`,
+              ],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 2,
+              ease: "easeInOut",
+            }}
+          />
+
+          {/* 右側の勝敗ライン（+50） */}
+          <motion.path
+            d={`
+              M75,0
+              Q77,10 75,20
+              Q73,30 75,40
+              Q77,50 75,60
+            `}
+            stroke="white"
+            strokeWidth="1.5"
+            fill="none"
+            animate={{
+              d: [
+                `M75,0 Q77,10 75,20 Q73,30 75,40 Q77,50 75,60`,
+                `M75,0 Q73,10 75,20 Q77,30 75,40 Q73,50 75,60`,
+              ],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 2,
+              ease: "easeInOut",
+            }}
+          />
+        </svg>
         {/* ピンク側 */}
         <svg
           width="100%"
