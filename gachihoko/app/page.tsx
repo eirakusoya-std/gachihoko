@@ -257,7 +257,20 @@ const handleForcePinkWin = () => {
 
 
       {/* === UI本体 === */}
-      <h1 style={{ fontSize: "2rem", zIndex: 10 }}>ホコとりゲーム</h1>
+      <h1
+        style={{
+          fontFamily: "'Bungee', 'Fredoka', 'Luckiest Guy', sans-serif",
+          fontSize: "2.5rem",
+          fontWeight: 900,
+          color: "#fff",
+          textTransform: "none",
+          letterSpacing: "-0.03em",
+          WebkitBackgroundClip: "text",
+          zIndex: 10,
+        }}
+      >
+        ホコとりゲーム
+      </h1>
 
       <div
         style={{
