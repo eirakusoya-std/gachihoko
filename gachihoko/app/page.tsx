@@ -177,14 +177,14 @@ const handleForcePinkWin = () => {
       ? `radial-gradient(circle at 50% 50%, rgba(25,215,25,0.6), rgba(0,50,0,0.8))`
       : winner === "pink"
       ? `radial-gradient(circle at 50% 50%, rgba(240,45,125,0.6), rgba(60,0,30,0.8))`
-      : `linear-gradient(135deg, #ffffff 0%, #cccccc 100%)`;
+      : `linear-gradient(135deg, #272727ff 0%, #0f0f0fff 100%)`;
 
   // === 泡の色設定 ===
   const bubbleColor =
     winner === "green"
       ? "rgba(125, 225, 125, 1.25)"
       : winner === "pink"
-      ? "rgba(240, 45, 125, 0.25)"
+      ? "rgba(240, 45, 125, 1.25)"
       : "rgba(180, 180, 180, 0.2)";
 
   // === 泡を生成 ===
