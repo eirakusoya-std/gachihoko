@@ -92,7 +92,7 @@ export default function Page() {
     setGauge((prev) => {
       if (phase === 1) {
         const next =
-          player === 1 ? Math.min(prev + value, 100) : Math.max(prev - value, -100);
+          player === 1 ? Math.min(prev + value*2, 100) : Math.max(prev - value*2, -100);
 
         if (next >= 50) {
           setWinner("Green");
