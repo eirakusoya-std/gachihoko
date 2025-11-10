@@ -115,7 +115,7 @@ export default function Page() {
         )
           return prev;
 
-        const slow = value * 0.2;
+        const slow = value * 0.4;
         const next =
           winnerTeam === "Green"
             ? Math.max(prev - slow, -100)
@@ -214,38 +214,38 @@ const handleForcePinkWin = () => {
       }}
     >
       {/* === 泡アニメーション層 === */}
-{bubbles.map((b) => (
-  <motion.div
-    key={b.id}
-    initial={{ opacity: 0, y: 300 }}
-    animate={{
-      opacity: [0, 0.8, 0.6, 0],
-      y: [300, -400], // ゆっくり上方向へ
-      x: [b.x + Math.sin(b.id) * 10, b.x + Math.sin(b.id + 2) * 20], // 横にふらふら
-      scale: [1, 1.15, 1], // 少し膨らむ
-    }}
-    transition={{
-      duration: b.duration,
-      repeat: Infinity,
-      delay: b.delay,
-      ease: "easeInOut",
-    }}
-    style={{
-      position: "absolute",
-      bottom: "-100px",
-      left: `${b.x}%`,
-      width: b.size,
-      height: b.size,
-      borderRadius: "50%",
-      background: bubbleColor,
-      filter: "blur(0px)",
-    }}
-  />
-))}
+      {bubbles.map((b) => (
+        <motion.div
+          key={b.id}
+          initial={{ opacity: 0, y: 300 }}
+          animate={{
+            opacity: [0, 0.8, 0.6, 0],
+            y: [300, -400], // ゆっくり上方向へ
+            x: [b.x + Math.sin(b.id) * 10, b.x + Math.sin(b.id + 2) * 20], // 横にふらふら
+            scale: [1, 1.15, 1], // 少し膨らむ
+          }}
+          transition={{
+            duration: b.duration,
+            repeat: Infinity,
+            delay: b.delay,
+            ease: "easeInOut",
+          }}
+          style={{
+            position: "absolute",
+            bottom: "-100px",
+            left: `${b.x}%`,
+            width: b.size,
+            height: b.size,
+            borderRadius: "50%",
+            background: bubbleColor,
+            filter: "blur(0px)",
+          }}
+        />
+      ))}
 
 
       {/* === UI本体 === */}
-      <h1 style={{ fontSize: "2rem", zIndex: 10 }}>Splatoon-style Tug-of-War ⚖️</h1>
+      <h1 style={{ fontSize: "2rem", zIndex: 10 }}>ホコとりゲーム</h1>
 
       <div
         style={{
