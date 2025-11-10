@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Scoreboard from "./components/Scoreboard";
+
 
 type MeshData = {
   value: number;
@@ -12,14 +14,20 @@ export default function Page() {
   const [gauge, setGauge] = useState(0);
   const [meshData, setMeshData] = useState<MeshData | null>(null);
   const [lastOccurredAt, setLastOccurredAt] = useState<string | null>(null);
-  const [winner, setWinner] = useState<"Green" | "pink" | null>(null);
+  const [winner, setWinner] = useState<"green" | "pink" | null>(null);
   const [phase, setPhase] = useState<1 | 2>(1);
-  const [winnerTeam, setWinnerTeam] = useState<"Green" | "pink" | null>(null);
+  const [winnerTeam, setWinnerTeam] = useState<"green" | "pink" | null>(null);
 
   const [wavePathLeft, setWavePathLeft] = useState("");
   const [wavePathRight, setWavePathRight] = useState("");
   const timeRef = useRef(0);
   const animRef = useRef<number | null>(null);
+
+  //得点板
+  const [greenScore, setgreenScore] = useState(0);
+  const [pinkScore, setPinkScore] = useState(0);
+  const handleGreenChange = (delta: number) => setgreenScore((prev) => Math.max(prev + delta, 0));
+  const handlePinkChange = (delta: number) => setPinkScore((prev) => Math.max(prev + delta, 0));
 
   // === 波アニメーション ===
   useEffect(() => {
@@ -89,49 +97,49 @@ export default function Page() {
 
   // === ゲージ更新 ===
   const updateGauge = (player: number, value: number) => {
-    setGauge((prev) => {
-      if (phase === 1) {
-        const next =
-          player === 1 ? Math.min(prev + value*2, 100) : Math.max(prev - value*2, -100);
+  setGauge((prev) => {
+    if (phase === 1) {
+      const next = player === 1 ? Math.min(prev + value, 100) : Math.max(prev - value, -100);
 
-        if (next >= 50) {
-          setWinner("Green");
-          setWinnerTeam("Green");
-          setPhase(2);
-          return 100;
-        } else if (next <= -50) {
-          setWinner("pink");
-          setWinnerTeam("pink");
-          setPhase(2);
-          return -100;
-        }
-        return next;
+      // 得点加算
+      if (player === 1) setgreenScore((s) => s + Math.round(value));
+      else setPinkScore((s) => s + Math.round(value));
+
+      if (next >= 50) {
+        setWinner("green");
+        setWinnerTeam("green");
+        setPhase(2);
+        return 100;
+      } else if (next <= -50) {
+        setWinner("pink");
+        setWinnerTeam("pink");
+        setPhase(2);
+        return -100;
       }
+      return next;
+    }
 
-      if (phase === 2) {
-        if (
-          (winnerTeam === "Green" && player === 1) ||
-          (winnerTeam === "pink" && player === 2)
-        )
-          return prev;
+    if (phase === 2) {
+      if ((winnerTeam === "green" && player === 1) || (winnerTeam === "pink" && player === 2))
+        return prev;
 
-        const slow = value * 0.6;
-        const next =
-          winnerTeam === "Green"
-            ? Math.max(prev - slow, -100)
-            : Math.min(prev + slow, 100);
+      const slow = value * 0.2;
+      const next =
+        winnerTeam === "green"
+          ? Math.max(prev - slow, -100)
+          : Math.min(prev + slow, 100);
 
-        if (Math.abs(next) <= 10) {
-          setPhase(1);
-          setWinner(null);
-          setWinnerTeam(null);
-        }
-        return next;
+      if (Math.abs(next) <= 10) {
+        setPhase(1);
+        setWinner(null);
+        setWinnerTeam(null);
       }
+      return next;
+    }
 
-      return prev;
-    });
-  };
+    return prev;
+  });
+};
 
   // === デバッグ操作 ===
   const handleManualAdd = () => updateGauge(1, 5);
@@ -146,8 +154,8 @@ export default function Page() {
   // === 即勝利ボタン ===
 const handleForceGreenWin = () => {
   setGauge(100);
-  setWinner("Green");
-  setWinnerTeam("Green");
+  setWinner("green");
+  setWinnerTeam("green");
   setPhase(2);
 };
 
@@ -165,7 +173,7 @@ const handleForcePinkWin = () => {
 
   // === 背景色 ===
   const backgroundGradient =
-    winner === "Green"
+    winner === "green"
       ? `radial-gradient(circle at 50% 50%, rgba(25,215,25,0.6), rgba(0,50,0,0.8))`
       : winner === "pink"
       ? `radial-gradient(circle at 50% 50%, rgba(240,45,125,0.6), rgba(60,0,30,0.8))`
@@ -173,8 +181,8 @@ const handleForcePinkWin = () => {
 
   // === 泡の色設定 ===
   const bubbleColor =
-    winner === "Green"
-      ? "rgba(25, 215, 25, 1.25)"
+    winner === "green"
+      ? "rgba(125, 225, 125, 1.25)"
       : winner === "pink"
       ? "rgba(240, 45, 125, 0.25)"
       : "rgba(180, 180, 180, 0.2)";
@@ -213,6 +221,14 @@ const handleForcePinkWin = () => {
         gap: "1rem",
       }}
     >
+
+      {/* 手動スコアボード */}
+      <Scoreboard
+        blueScore={greenScore}
+        pinkScore={pinkScore}
+        onBlueChange={handleGreenChange}
+        onPinkChange={handlePinkChange}
+      />
       {/* === 泡アニメーション層 === */}
       {bubbles.map((b) => (
         <motion.div
@@ -423,14 +439,14 @@ const handleForcePinkWin = () => {
             marginTop: "1rem",
             padding: "10px 20px",
             borderRadius: "12px",
-            background: winner === "Green" ? GreenColor : pinkColor,
+            background: winner === "green" ? GreenColor : pinkColor,
             color: "#fff",
             fontWeight: "bold",
             fontSize: "1.5rem",
             zIndex: 10,
           }}
         >
-          {winner === "Green" ? "Green WINS!" : "PINK WINS!"}
+          {winner === "green" ? "Green WINS!" : "PINK WINS!"}
         </motion.div>
       )}
     </motion.main>
