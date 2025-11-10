@@ -115,7 +115,7 @@ export default function Page() {
         )
           return prev;
 
-        const slow = value * 0.4;
+        const slow = value * 0.6;
         const next =
           winnerTeam === "Green"
             ? Math.max(prev - slow, -100)
