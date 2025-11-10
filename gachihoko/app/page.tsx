@@ -101,10 +101,6 @@ export default function Page() {
     if (phase === 1) {
       const next = player === 1 ? Math.min(prev + value, 100) : Math.max(prev - value, -100);
 
-      // 得点加算
-      if (player === 1) setgreenScore((s) => s + Math.round(value));
-      else setPinkScore((s) => s + Math.round(value));
-
       if (next >= 50) {
         setWinner("green");
         setWinnerTeam("green");
