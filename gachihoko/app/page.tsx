@@ -29,6 +29,9 @@ export default function Page() {
   const handleGreenChange = (delta: number) => setgreenScore((prev) => Math.max(prev + delta, 0));
   const handlePinkChange = (delta: number) => setPinkScore((prev) => Math.max(prev + delta, 0));
 
+  // === 新規: slowFactor追加 ===
+  const [slowFactor, setSlowFactor] = useState(0.2); // 押し返し強度係数
+
   // === 波アニメーション ===
   useEffect(() => {
     const animate = () => {
@@ -100,7 +103,6 @@ export default function Page() {
   setGauge((prev) => {
     if (phase === 1) {
       const next = player === 1 ? Math.min(prev + value, 100) : Math.max(prev - value, -100);
-
       if (next >= 50) {
         setWinner("green");
         setWinnerTeam("green");
@@ -119,7 +121,7 @@ export default function Page() {
       if ((winnerTeam === "green" && player === 1) || (winnerTeam === "pink" && player === 2))
         return prev;
 
-      const slow = value * 0.2;
+      const slow = value * slowFactor; // ←ここを調整可能に
       const next =
         winnerTeam === "green"
           ? Math.max(prev - slow, -100)
@@ -437,6 +439,32 @@ const handleForcePinkWin = () => {
           💥 Pink Win!
         </button>
       </div>
+      {/* === デバッグスライダー === */}
+<div
+  style={{
+    marginTop: "1rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "1rem",
+    zIndex: 10,
+  }}
+>
+  <label style={{ fontWeight: "bold" }}>🧩 Slow Factor:</label>
+  <input
+    type="range"
+    min="0.05"
+    max="1"
+    step="0.05"
+    value={slowFactor}
+    onChange={(e) => setSlowFactor(parseFloat(e.target.value))}
+    style={{
+      width: "200px",
+      accentColor: "#fff",
+      cursor: "pointer",
+    }}
+  />
+  <span style={{ minWidth: "50px" }}>{slowFactor.toFixed(2)}</span>
+</div>
 
 
       {winner && (
