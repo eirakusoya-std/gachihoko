@@ -30,7 +30,8 @@ export default function Page() {
   const handlePinkChange = (delta: number) => setPinkScore((prev) => Math.max(prev + delta, 0));
 
   // === 新規: slowFactor追加 ===
-  const [slowFactor, setSlowFactor] = useState(0.2); // 押し返し強度係数
+  const [normalFactor, setNormalFactor] = useState(1.0); // 通常時のスピード係数
+  const [slowFactor, setSlowFactor] = useState(0.7); // 押し返し強度係数
 
   // === 波アニメーション ===
   useEffect(() => {
@@ -99,10 +100,15 @@ export default function Page() {
   }, [lastOccurredAt]);
 
   // === ゲージ更新 ===
-  const updateGauge = (player: number, value: number) => {
+  // === ゲージ更新 ===
+const updateGauge = (player: number, value: number) => {
   setGauge((prev) => {
     if (phase === 1) {
-      const next = player === 1 ? Math.min(prev + value, 100) : Math.max(prev - value, -100);
+      // 通常時：normalFactorを適用
+      const delta = value * normalFactor;
+      const next =
+        player === 1 ? Math.min(prev + delta, 100) : Math.max(prev - delta, -100);
+
       if (next >= 50) {
         setWinner("green");
         setWinnerTeam("green");
@@ -121,7 +127,8 @@ export default function Page() {
       if ((winnerTeam === "green" && player === 1) || (winnerTeam === "pink" && player === 2))
         return prev;
 
-      const slow = value * slowFactor; // ←ここを調整可能に
+      // 押し返し中：slowFactorを適用
+      const slow = value * slowFactor;
       const next =
         winnerTeam === "green"
           ? Math.max(prev - slow, -100)
@@ -138,6 +145,7 @@ export default function Page() {
     return prev;
   });
 };
+
 
   // === デバッグ操作 ===
   const handleManualAdd = () => updateGauge(1, 5);
@@ -439,31 +447,46 @@ const handleForcePinkWin = () => {
           💥 Pink Win!
         </button>
       </div>
-      {/* === デバッグスライダー === */}
+      {/* === デバッグスライダー群 === */}
 <div
   style={{
-    marginTop: "1rem",
+    marginTop: "1.5rem",
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
-    gap: "1rem",
+    gap: "0.8rem",
     zIndex: 10,
   }}
 >
-  <label style={{ fontWeight: "bold" }}>🧩 Slow Factor:</label>
-  <input
-    type="range"
-    min="0.05"
-    max="1"
-    step="0.05"
-    value={slowFactor}
-    onChange={(e) => setSlowFactor(parseFloat(e.target.value))}
-    style={{
-      width: "200px",
-      accentColor: "#fff",
-      cursor: "pointer",
-    }}
-  />
-  <span style={{ minWidth: "50px" }}>{slowFactor.toFixed(2)}</span>
+  {/* 通常時 */}
+  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+    <label style={{ fontWeight: "bold" }}>🚀 Normal Factor:</label>
+    <input
+      type="range"
+      min="0.2"
+      max="3"
+      step="0.1"
+      value={normalFactor}
+      onChange={(e) => setNormalFactor(parseFloat(e.target.value))}
+      style={{ width: "200px", accentColor: "#0ff", cursor: "pointer" }}
+    />
+    <span style={{ minWidth: "50px" }}>{normalFactor.toFixed(2)}</span>
+  </div>
+
+  {/* 押し返し時 */}
+  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+    <label style={{ fontWeight: "bold" }}>🧩 Slow Factor:</label>
+    <input
+      type="range"
+      min="0.05"
+      max="1"
+      step="0.05"
+      value={slowFactor}
+      onChange={(e) => setSlowFactor(parseFloat(e.target.value))}
+      style={{ width: "200px", accentColor: "#fff", cursor: "pointer" }}
+    />
+    <span style={{ minWidth: "50px" }}>{slowFactor.toFixed(2)}</span>
+  </div>
 </div>
 
 
